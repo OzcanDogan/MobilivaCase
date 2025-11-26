@@ -1,0 +1,52 @@
+# Visual Studio
+.vscode/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build
+bin/
+obj/
+out/
+
+# Logs
+logs/
+*.log
+*.json
+*.txt
+
+# Serilog logs
+logs/
+*.jsonlog
+
+# IIS / Kestrel
+iisexpress/
+
+# Cache
+*.cache
+
+# Env
+.env
+.env.*
+
+# User secrets
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.Secrets.json
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Rider
+.idea/
+
+# Node
+node_modules/
+
+# Publish
+publish/
+artifacts/
