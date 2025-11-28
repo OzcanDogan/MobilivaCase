@@ -1,3 +1,6 @@
+using MobilivaCase.Application.Interfaces;
+using MobilivaCase.Application.Services;
+using MobilivaCase.Infrastructure.MessageQueue;
 using MobilivaCase.MailWorker;
 
 Host.CreateDefaultBuilder(args)
@@ -7,6 +10,8 @@ Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices(services =>
     {
+        services.AddSingleton<RabbitMqService>();
+        services.AddSingleton<IEmailService,Emailservice>();
         services.AddHostedService<Worker>();
     })
     .Build()

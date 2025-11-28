@@ -1,17 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using MobilivaCase.Data;
-using MobilivaCase.DTOs;
-using MobilivaCase.Models;
-using MobilivaCase.Services;
+using MobilivaCase.Application.Interfaces;
+using MobilivaCase.Application.Mappings;
+using MobilivaCase.Application.Services;
+using MobilivaCase.Infrastructure.Cache;
+using MobilivaCase.Infrastructure.MessageQueue;
+using MobilivaCase.Infrastructure.Persistence;
+using MobilivaCase.Infrastructure.Persistence.Repositories;
 using Serilog;
 
-
-
-
-
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Host.UseSerilog((context, services, configuration) =>
 {
     configuration
@@ -20,7 +17,6 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -33,27 +29,23 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         new MySqlServerVersion(new Version(8, 0, 0))
     );
 });
-
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
     options.InstanceName = "MobilivaCase_";
 });
+
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
-
-builder.Services.AddSingleton<RedisCacheService>();
-builder.Services.AddSingleton<RabbitMqService>();
-
+builder.Services.AddScoped<RedisCacheService>();
+builder.Services.AddScoped<RabbitMqService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IEmailService, Emailservice>();
+builder.Services.AddScoped<ProductRepository>();
+builder.Services.AddScoped<OrderRepository>();
 
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await ProductSeeder.SeedAsync(db);
-}
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

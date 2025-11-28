@@ -1,4 +1,4 @@
-﻿namespace MobilivaCase.Models
+﻿namespace MobilivaCase.Domain.Entities
 {
     public class Order
     {

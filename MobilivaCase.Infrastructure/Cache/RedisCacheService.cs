@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using MobilivaCase.Models;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace MobilivaCase.Services
+
+namespace MobilivaCase.Infrastructure.Cache
 {
     public class RedisCacheService
     {

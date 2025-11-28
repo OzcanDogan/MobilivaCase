@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
-using MobilivaCase.DTOs;
-using MobilivaCase.Models;
+using MobilivaCase.Application.DTOs;
+using MobilivaCase.Domain.Entities;
 
-namespace MobilivaCase.Services
+namespace MobilivaCase.Application.Mappings
 {
     public class MappingProfile : Profile
     {

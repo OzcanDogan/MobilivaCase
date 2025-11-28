@@ -1,12 +1,12 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
 using MimeKit;
 using MailKit.Net.Smtp;
+using MobilivaCase.Infrastructure.MessageQueue;
+using MobilivaCase.Application.DTOs;
+using MobilivaCase.Application.Interfaces;
 
 
 namespace MobilivaCase.MailWorker
@@ -17,23 +17,18 @@ namespace MobilivaCase.MailWorker
         private readonly IConfiguration _config;
         private readonly IConnection _connection;
         private readonly IModel _channel;
+        private readonly RabbitMqService _rabbitMQService;
+        private IEmailService _emailService;
 
-        public Worker(ILogger<Worker> logger, IConfiguration config)
+
+        public Worker(ILogger<Worker> logger,RabbitMqService rabbitMqService, IConfiguration config, IEmailService emailService)
         {
             _logger = logger;
+            _rabbitMQService = rabbitMqService;
             _config = config;
+            _connection = rabbitMqService.Connection;
 
-            var factory = new ConnectionFactory()
-            {
-                HostName = _config["RabbitMq:Host"],
-                Port = int.Parse(_config["RabbitMq:Port"]),  
-                UserName = _config["RabbitMq:UserName"],
-                Password = _config["RabbitMq:Password"]
-            };
-
-            _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
-
             _channel.QueueDeclare(
                 queue: _config["RabbitMq:Queue"],
                 durable: true,
@@ -41,8 +36,8 @@ namespace MobilivaCase.MailWorker
                 autoDelete: false,
                 arguments: null
             );
-
             _logger.LogInformation("MailWorker is started");
+            _emailService = emailService;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -56,9 +51,9 @@ namespace MobilivaCase.MailWorker
 
                 _logger.LogInformation($"[MailWorker] Message Received: {json}");
 
-                var mailData = JsonSerializer.Deserialize<MailDataDto>(json);
+                var mailData = JsonSerializer.Deserialize<MailDataDTO>(json);
 
-                await SendEmailAsync(mailData);
+                await _emailService.SendEmailAsync(mailData);
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             };
@@ -72,34 +67,9 @@ namespace MobilivaCase.MailWorker
             return Task.CompletedTask;
         }
 
-        private async Task SendEmailAsync(MailDataDto data)
-        {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Mobiliva", _config["Mail:User"]));
-            message.To.Add(new MailboxAddress(data.CustomerName, data.CustomerEmail));
-
-            message.Subject = $"Mobiliva Siparişiniz #{data.OrderId}";
-
-            message.Body = new TextPart("plain")
-            {
-                Text = $"Merhaba {data.CustomerName}, siparişiniz alınmıştır.\nToplam Tutar: {data.Total} TL"
-            };
-
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_config["Mail:Host"], int.Parse(_config["Mail:Port"]), false);
-            await smtp.AuthenticateAsync(_config["Mail:User"], _config["Mail:Pass"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
-
-            _logger.LogInformation($"Mail sent to {data.CustomerEmail}");
-        }
+ 
+       
     }
 
-    public class MailDataDto
-    {
-        public int OrderId { get; set; }
-        public string CustomerEmail { get; set; }
-        public string CustomerName { get; set; }
-        public decimal Total { get; set; }
-    }
+
 }

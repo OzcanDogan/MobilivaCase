@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MobilivaCase.Application\MobilivaCase.Application.csproj" />
     <ProjectReference Include="..\MobilivaCase.MailWorker\MobilivaCase.MailWorker.csproj" />
   </ItemGroup>
 

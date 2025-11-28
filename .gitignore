@@ -14,11 +14,9 @@ out/
 # Logs
 logs/
 *.log
-*.json
 *.txt
 
 # Serilog logs
-logs/
 *.jsonlog
 
 # IIS / Kestrel
@@ -27,19 +25,14 @@ iisexpress/
 # Cache
 *.cache
 
-# Env
+# Env files
 .env
 .env.*
 
-# User secrets
-**/appsettings.Development.json
-**/appsettings.Local.json
-**/appsettings.Secrets.json
+# IGNORE ALL appsettings by default except Development
+appsettings*.json
+!appsettings.Development.json
 
-# NuGet
-packages/
-*.nupkg
-*.snupkg
 
 # Rider
 .idea/

@@ -1,12 +1,13 @@
-﻿using RabbitMQ.Client;
+﻿using Microsoft.Extensions.Configuration;
+using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 
-namespace MobilivaCase.Services
+namespace MobilivaCase.Infrastructure.MessageQueue
 {
     public class RabbitMqService : IDisposable
     {
-        private readonly IConnection _connection;
+        public readonly IConnection Connection;
 
         public RabbitMqService(IConfiguration configuration)
         {
@@ -18,12 +19,12 @@ namespace MobilivaCase.Services
                 Port = int.Parse(configuration["RabbitMq:Port"])   
             };
 
-            _connection = factory.CreateConnection();
+            Connection = factory.CreateConnection();
         }
 
         public void Publish(string queueName, object message)
         {
-            using var channel = _connection.CreateModel();
+            using var channel = Connection.CreateModel();
 
           
             channel.QueueDeclare(
@@ -51,7 +52,7 @@ namespace MobilivaCase.Services
 
         public void Dispose()
         {
-            _connection?.Dispose();
+            Connection?.Dispose();
         }
     }
 }

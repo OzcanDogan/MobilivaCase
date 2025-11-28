@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using MobilivaCase.Application.DTOs;
+using MobilivaCase.Application.Interfaces;
 using MobilivaCase.Data;
-using MobilivaCase.Models;
-using MobilivaCase.Services;
 
 namespace MobilivaCase.Controllers
 {
@@ -10,74 +10,25 @@ namespace MobilivaCase.Controllers
     [Route("api/[controller]")]
     public class OrderController : Controller
     {
-
-        protected readonly AppDbContext _context;
-        private readonly RabbitMqService _rabbit;
+        private readonly IOrderService _orderService;
         private readonly IMapper _mapper;
         private readonly ILogger<OrderController> _logger;
-
-
-        public OrderController(AppDbContext context, RabbitMqService rabbit, IMapper mapper, ILogger<OrderController> logger)
+        public OrderController(ILogger<OrderController> logger, IOrderService orderService)
         {
-            _context = context;
-            _rabbit = rabbit;
-            _mapper = mapper;
             _logger = logger;
+            _orderService = orderService;
         }
-
         [HttpPost]
         public async Task<ApiResponse<int>> CreateOrder([FromBody] CreateOrderRequest model)
         {
             _logger.LogInformation("Sipariş isteği alındı: {@model}", model);
             var res = new ApiResponse<int>();
-            var dto = _mapper.Map<Order>(model);
-
             try
             {
-
-
-                var order = new Order
-                {
-                    CustomerName = model.CustomerName,
-                    CustomerEmail = model.CustomerEmail,
-                    CustomerGSM = model.CustomerGSM,
-                    TotalAmount = model.ProductDetails.Sum(x => x.UnitPrice * x.Amount),
-                    OrderDetails = model.ProductDetails.Select(p => new OrderDetail
-                    {
-                        ProductId = p.ProductId,
-                        UnitPrice = p.UnitPrice,
-                        Amount = p.Amount
-                    }).ToList()
-                };
-
-
-                await _context.Orders.AddAsync(order);
-                await _context.SaveChangesAsync();
-                _logger.LogInformation
-                 (
-                 "Order successfully created | Customer: {CustomerName}, Total: {TotalAmount}",
-                 order.CustomerName,
-                 order.TotalAmount
-                 );
-
-
-
-
-                // Mail göndermek için mesaj oluşturma işlemini burda yapıyorum.
-                var mailMessage = new
-                {
-                    OrderId = order.Id,
-                    CustomerEmail = order.CustomerEmail,
-                    CustomerName = order.CustomerName,
-                    Total = order.TotalAmount,
-                    CreatedAt = DateTime.Now
-                };
-                // Mail mesajını RabbitMQ kuyruğuna gönderme işlemini de burda yapıyorum.
-                _rabbit.Publish("SendMailQueue", mailMessage);
-
+                var orderId = await _orderService.CreateOrderAsync(model);
                 res.Status = ApiStatus.Success;
                 res.Message = "Order created successfully.";
-                res.Data = order.Id;
+                res.Data = orderId;
                 return res;
             }
             catch (Exception ex)
@@ -89,8 +40,5 @@ namespace MobilivaCase.Controllers
                 return res;
             }
         }
-
-
     }
-
 }

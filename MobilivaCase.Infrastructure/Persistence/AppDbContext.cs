@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MobilivaCase.Models;
+using MobilivaCase.Domain.Entities;
 
-namespace MobilivaCase.Data
+namespace MobilivaCase.Infrastructure.Persistence
 {
     public class AppDbContext:DbContext
     {
